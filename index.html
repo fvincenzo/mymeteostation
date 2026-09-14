@@ -8,13 +8,14 @@
   <meta name="description" content="Generate and copy formatted weather strings with Open-Meteo real-time forecasts." />
   <meta name="theme-color" content="#0284c7" />
 
-  <link rel="manifest" href="manifest.json" />
-
+  <!-- Inline Web App Manifest (Data URI for true single-file PWA) -->
+  <link rel="manifest" href="manifest.json">
+  
   <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Google Font: Plus Jakarta Sans & JetBrains Mono -->
+  <!-- Google Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -33,6 +34,7 @@
       user-select: text;
     }
 
+    /* Custom subtle glass panel */
     .glass-card {
       background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(16px);
@@ -55,10 +57,12 @@
       box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
     }
 
+    /* Smooth theme gradient transition */
     #background-wrapper {
       transition: background 1s ease-in-out;
     }
 
+    /* Custom scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -141,6 +145,7 @@
         </button>
       </div>
 
+      <!-- Search Autocomplete Suggestions List -->
       <div id="search-results-list"
         class="hidden absolute top-full mt-2 w-full glass-card rounded-xl overflow-hidden shadow-2xl z-40 border border-slate-700/60 max-h-60 overflow-y-auto">
       </div>
@@ -148,7 +153,9 @@
   </header>
 
   <div class="w-full max-w-4xl mx-auto mb-4 flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar"
-    id="recent-chips-container"></div>
+    id="recent-chips-container">
+    <!-- Populated by JS -->
+  </div>
 
   <main class="w-full max-w-4xl mx-auto flex flex-col gap-6">
 
@@ -170,7 +177,7 @@
       <!-- String Preview Box -->
       <div class="relative group mt-1">
         <div id="formatted-string-box"
-          class="font-mono-code text-sm sm:text-base p-4 rounded-xl bg-slate-950/80 border border-slate-700/50 text-slate-100 break-words leading-relaxed select-all cursor-pointer hover:border-sky-500/50 transition">
+          class="font-mono-code text-sm sm:text-base p-4 rounded-xl bg-slate-950/80 border border-slate-700/50 text-slate-100 break-words leading-relaxed select-all">
           Fetching weather data...
         </div>
 
@@ -208,6 +215,7 @@
 
         <div id="formatting-options-panel"
           class="hidden mt-3 pt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Station Name input -->
           <div class="col-span-full">
             <label class="block text-xs font-medium text-slate-400 mb-1">Station Signature Name:</label>
             <div class="flex gap-2">
@@ -219,6 +227,7 @@
             </div>
           </div>
 
+          <!-- Quick Checkbox Toggles -->
           <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
             <input type="checkbox" id="cfg-emoji" checked class="rounded accent-sky-500" />
             <span>Include Emojis (☀️ 💨 💧)</span>
@@ -328,12 +337,15 @@
 
         <!-- Compass Visual -->
         <div class="relative w-36 h-36 mx-auto my-3 flex items-center justify-center">
+          <!-- Compass Dial Ring -->
           <div class="w-full h-full rounded-full border border-slate-700 relative flex items-center justify-center">
             <span class="absolute top-1 text-[10px] font-bold text-slate-400">N</span>
             <span class="absolute bottom-1 text-[10px] font-bold text-slate-400">S</span>
             <span class="absolute right-1.5 text-[10px] font-bold text-slate-400">E</span>
             <span class="absolute left-1.5 text-[10px] font-bold text-slate-400">W</span>
+            <!-- Center Pivot -->
             <div class="w-2.5 h-2.5 rounded-full bg-sky-400 z-10 shadow-sm"></div>
+            <!-- Dynamic Arrow -->
             <div id="compass-arrow"
               class="absolute w-1 h-28 flex flex-col justify-between items-center transition-transform duration-700 origin-center"
               style="transform: rotate(0deg);">
@@ -352,6 +364,7 @@
           <p id="display-wind-gusts" class="text-xs text-slate-400 mt-0.5">Gusts up to --</p>
         </div>
 
+        <!-- Sun Times -->
         <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs text-slate-300">
           <div class="flex items-center gap-1.5">
             <i data-lucide="sunrise" class="w-4 h-4 text-amber-400"></i>
@@ -367,13 +380,14 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      <!-- 24-Hour Hourly Forecast -->
+      <!-- 24-Hour Hourly Forecast Horizontal Scroll -->
       <section class="lg:col-span-2 glass-card rounded-2xl p-5">
         <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
           <i data-lucide="clock" class="w-3.5 h-3.5 text-sky-400"></i>
           Next 24 Hours Forecast
         </h3>
         <div id="hourly-forecast-container" class="flex gap-3 overflow-x-auto pb-2 pt-1 no-scrollbar">
+          <!-- Populated by JS -->
           <div class="text-xs text-slate-500 py-6">Loading hourly data...</div>
         </div>
       </section>
@@ -385,12 +399,12 @@
           5-Day Forecast
         </h3>
         <div id="daily-forecast-container" class="flex flex-col gap-2.5">
+          <!-- Populated by JS -->
           <div class="text-xs text-slate-500 py-6 text-center">Loading daily forecast...</div>
         </div>
       </section>
     </div>
 
-    <!-- Units Modal -->
     <div id="units-modal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 hidden">
       <div class="glass-card rounded-2xl max-w-sm w-full p-6 border border-slate-700 shadow-2xl relative">
@@ -469,6 +483,7 @@
   </footer>
 
   <script>
+    /* WMO Weather Interpretation Codes (Open-Meteo standard) */
     const WMO_CODES = {
       0: { text: "Clear sky", emoji: "☀️", theme: "clear" },
       1: { text: "Mainly clear", emoji: "🌤️", theme: "clear" },
@@ -500,8 +515,10 @@
       99: { text: "Thunderstorm with heavy hail", emoji: "⛈️", theme: "thunder" }
     };
 
+    /* App Persistent State Management */
+    const savedGps = JSON.parse(localStorage.getItem("meteo_last_gps"));
     const AppState = {
-      location: {
+      location: savedGps || {
         name: "London",
         country: "United Kingdom",
         lat: 51.5074,
@@ -509,9 +526,9 @@
       },
       stationName: localStorage.getItem("meteo_station_name") || "MyMeteoStation",
       units: JSON.parse(localStorage.getItem("meteo_units")) || {
-        temperature: "celsius",
-        windSpeed: "mph",
-        pressure: "hPa"
+        temperature: "celsius", // 'celsius' | 'fahrenheit'
+        windSpeed: "mph",       // 'mph' | 'kmh' | 'kn' | 'ms'
+        pressure: "hPa"         // 'hPa' | 'inHg'
       },
       formatOptions: JSON.parse(localStorage.getItem("meteo_format_opts")) || {
         emoji: true,
@@ -534,12 +551,14 @@
       generatedString: ""
     };
 
+    // Convert degrees (0-360) to 16-point cardinal compass text
     function getCardinalDirection(deg) {
       const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
       const index = Math.round((deg % 360) / 22.5) % 16;
       return directions[index];
     }
 
+    // Friendly long label for direction
     function getLongDirection(abbr) {
       const map = {
         N: "North", NNE: "North-Northeast", NE: "Northeast", ENE: "East-Northeast",
@@ -550,10 +569,11 @@
       return map[abbr] || abbr;
     }
 
+    // Toast trigger with visual bounce
     function showToast(msg = "Copied to clipboard!") {
       const toast = document.getElementById("toast");
       const msgEl = document.getElementById("toast-message");
-      msgEl.textContent = msg;
+      msgEl.innerText = msg;
       toast.classList.remove("opacity-0", "-translate-y-16");
       toast.classList.add("opacity-100", "translate-y-0");
 
@@ -563,35 +583,24 @@
       }, 2400);
     }
 
-    async function copyTextToClipboard(text) {
+    // Robust Clipboard copy function with document.execCommand fallback
+    function copyTextToClipboard(text) {
       if (!text) return;
-      let copied = false;
-      if (navigator.clipboard && window.isSecureContext) {
-        try {
-          await navigator.clipboard.writeText(text);
-          copied = true;
-        } catch (err) {
-          console.warn("Clipboard API failed, attempting fallback...", err);
-        }
+      let success = false;
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        success = document.execCommand("copy");
+      } catch (err) {
+        console.warn("Clipboard fallback error", err);
       }
+      document.body.removeChild(textarea);
 
-      if (!copied) {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        textarea.style.left = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-          copied = document.execCommand("copy");
-        } catch (err) {
-          console.warn("execCommand copy failed", err);
-        }
-        document.body.removeChild(textarea);
-      }
-
-      if (copied) {
+      if (success) {
         showToast("Copied to clipboard! ✨");
         const btn = document.getElementById("btn-copy-label");
         btn.textContent = "Copied!";
@@ -599,7 +608,7 @@
           btn.textContent = "Copy Status";
         }, 1800);
       } else {
-        showToast("Please copy text manually");
+        showToast("Selection ready! Please press Ctrl+C");
       }
     }
 
@@ -607,6 +616,7 @@
       const { lat, lon } = AppState.location;
       const { temperature, windSpeed } = AppState.units;
 
+      // Construct Open-Meteo REST query
       const url = new URL("https://api.open-meteo.com/v1/forecast");
       url.searchParams.set("latitude", lat);
       url.searchParams.set("longitude", lon);
@@ -637,7 +647,6 @@
       url.searchParams.set("temperature_unit", temperature);
       url.searchParams.set("wind_speed_unit", windSpeed);
       url.searchParams.set("timezone", "auto");
-      url.searchParams.set("forecast_days", "2");
 
       try {
         const response = await fetch(url.toString());
@@ -647,8 +656,8 @@
         renderAllWeather();
       } catch (err) {
         console.error("Failed to load Open-Meteo weather data:", err);
-        document.getElementById("formatted-string-box").textContent =
-          "⚠️ Unable to load Open-Meteo forecast. Check your internet connection or try another location.";
+        document.getElementById("formatted-string-box").innerText =
+          `⚠️ Unable to load Open-Meteo forecast. Check your internet connection or try another location.`;
       }
     }
 
@@ -662,23 +671,29 @@
       const windUnit = AppState.units.windSpeed;
       const cardinal = getCardinalDirection(current.wind_direction_10m);
 
+      // Temperature rounded values
       const curTemp = Math.round(current.temperature_2m);
       const feelsLike = Math.round(current.apparent_temperature);
       const humidity = Math.round(current.relative_humidity_2m);
       const windSpeedVal = Math.round(current.wind_speed_10m);
       const gustVal = Math.round(current.wind_gusts_10m);
 
+      // Barometric Pressure conversion if needed
       let pressureVal = Math.round(current.surface_pressure);
       let pressureDisplay = `${pressureVal} hPa`;
       if (AppState.units.pressure === "inHg") {
         pressureDisplay = `${(pressureVal * 0.02953).toFixed(2)} inHg`;
       }
 
+      /* 1. Build Format String requested by user:
+         Example: '☀️ Clear sky, 15°C, Feels like 12°C, Humidity 73%, Wind 11mph from SW - by MyMeteoStation' */
       const parts = [];
+
       if (AppState.formatOptions.location) {
         parts.push(`[${AppState.location.name}]`);
       }
 
+      // Condition with emoji
       let condStr = "";
       if (AppState.formatOptions.emoji) {
         condStr += `${wmo.emoji} `;
@@ -691,66 +706,80 @@
       if (AppState.formatOptions.temp) {
         parts.push(`${curTemp}${tempUnit}`);
       }
+
       if (AppState.formatOptions.feels) {
         parts.push(`Feels like ${feelsLike}${tempUnit}`);
       }
+
       if (AppState.formatOptions.humidity) {
         parts.push(`Humidity ${humidity}%`);
       }
+
       if (AppState.formatOptions.wind) {
         parts.push(`Wind ${windSpeedVal}${windUnit} from ${cardinal}`);
       }
+
       if (AppState.formatOptions.pressure) {
         parts.push(`Pressure ${pressureDisplay}`);
       }
 
       let resultString = parts.join(", ");
+
       if (AppState.formatOptions.station && AppState.stationName.trim()) {
         resultString += ` - by ${AppState.stationName.trim()}`;
       }
 
       AppState.generatedString = resultString;
-      document.getElementById("formatted-string-box").textContent = resultString;
+      document.getElementById("formatted-string-box").innerText = resultString;
 
-      document.getElementById("display-city").textContent = `${AppState.location.name}, ${AppState.location.country || ""}`;
-      document.getElementById("display-condition-text").textContent = wmo.text;
-      document.getElementById("display-weather-icon").textContent = wmo.emoji;
-      document.getElementById("display-current-temp").textContent = curTemp;
-      document.getElementById("display-temp-unit").textContent = tempUnit;
-      document.getElementById("display-feels-like").textContent = `${feelsLike}°`;
-      document.getElementById("display-humidity").textContent = `${humidity}%`;
-      document.getElementById("display-wind-summary").textContent = `${windSpeedVal} ${windUnit} ${cardinal}`;
-      document.getElementById("display-precip").textContent = `${current.precipitation} mm`;
+      /* 2. Update Primary Dashboard UI */
+      document.getElementById("display-city").innerText = `${AppState.location.name}, ${AppState.location.country || ""}`;
+      document.getElementById("display-condition-text").innerText = wmo.text;
+      document.getElementById("display-weather-icon").innerText = wmo.emoji;
+      document.getElementById("display-current-temp").innerText = curTemp;
+      document.getElementById("display-temp-unit").innerText = tempUnit;
+      document.getElementById("display-feels-like").innerText = `${feelsLike}${tempUnit}`;
+      document.getElementById("display-humidity").innerText = `${humidity}%`;
+      document.getElementById("display-wind-summary").innerText = `${windSpeedVal} ${windUnit} ${cardinal}`;
+      document.getElementById("display-precip").innerText = `${current.precipitation} mm`;
 
-      const currentHourIndex = new Date().getHours();
-      if (hourly && hourly.dew_point_2m && hourly.dew_point_2m.length > currentHourIndex) {
-        document.getElementById("display-dew-point").textContent = `${Math.round(hourly.dew_point_2m[currentHourIndex])}°`;
+      // Dew Point from hourly current slot
+      if (hourly && hourly.dew_point_2m && hourly.dew_point_2m.length > 0) {
+        document.getElementById("display-dew-point").innerText = `${Math.round(hourly.dew_point_2m[0])}${tempUnit}`;
       }
 
-      if (hourly && hourly.uv_index && hourly.uv_index.length > currentHourIndex) {
-        document.getElementById("display-uv").textContent = Math.round(hourly.uv_index[currentHourIndex]);
+      // UV Index
+      if (hourly && hourly.uv_index && hourly.uv_index.length > 0) {
+        document.getElementById("display-uv").innerText = Math.round(hourly.uv_index[0]);
       }
 
+      // Compass UI
       const windDeg = current.wind_direction_10m;
-      document.getElementById("display-wind-deg-val").textContent = `${windDeg}°`;
+      document.getElementById("display-wind-deg-val").innerText = `${windDeg}°`;
       document.getElementById("compass-arrow").style.transform = `rotate(${windDeg}deg)`;
-      document.getElementById("display-compass-label").textContent = `Wind from ${getLongDirection(cardinal)}`;
-      document.getElementById("display-wind-gusts").textContent = `Gusts up to ${gustVal} ${windUnit}`;
+      document.getElementById("display-compass-label").innerText = `Wind from ${getLongDirection(cardinal)}`;
+      document.getElementById("display-wind-gusts").innerText = `Gusts up to ${gustVal} ${windUnit}`;
 
-      if (daily && daily.sunrise && daily.sunset && daily.sunrise.length > 0) {
+      // Sun Times
+      if (daily && daily.sunrise && daily.sunset) {
         const sunriseDate = new Date(daily.sunrise[0]);
         const sunsetDate = new Date(daily.sunset[0]);
-        document.getElementById("display-sunrise").textContent = sunriseDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        document.getElementById("display-sunset").textContent = sunsetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById("display-sunrise").innerText = sunriseDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById("display-sunset").innerText = sunsetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
-      document.getElementById("header-coords").textContent = `${AppState.location.lat.toFixed(2)}°N, ${AppState.location.lon.toFixed(2)}°E`;
-      document.getElementById("display-updated-time").textContent = `Updated at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      // Header coordinates & last update
+      document.getElementById("header-coords").innerText = `${AppState.location.lat.toFixed(2)}°N, ${AppState.location.lon.toFixed(2)}°E`;
+      document.getElementById("display-updated-time").innerText = `Updated at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
+      // Update background theme tint
       updateBackgroundTheme(wmo.theme);
+
+      // Render 24-hour and 5-day widgets
       renderHourlyStrip(hourly);
       renderDailyForecast(daily);
 
+      // Re-init icons
       lucide.createIcons();
     }
 
@@ -760,14 +789,13 @@
 
       container.innerHTML = "";
       const currentHourIndex = new Date().getHours();
-      const count = Math.min(24, hourly.time.length - currentHourIndex);
+      const next24 = hourly.time.slice(currentHourIndex, currentHourIndex + 24);
 
-      for (let idx = 0; idx < count; idx++) {
+      next24.forEach((timeStr, idx) => {
         const absoluteIndex = currentHourIndex + idx;
-        const timeStr = hourly.time[absoluteIndex];
         const dateObj = new Date(timeStr);
         const hourLabel = idx === 0 ? "Now" : dateObj.toLocaleTimeString([], { hour: 'numeric' });
-        const code = hourly.weather_code[absoluteIndex] ?? 0;
+        const code = hourly.weather_code[absoluteIndex] || 0;
         const itemWmo = WMO_CODES[code] || { emoji: "☀️" };
         const temp = Math.round(hourly.temperature_2m[absoluteIndex]);
 
@@ -779,7 +807,7 @@
           <span class="text-xs font-bold text-white mt-1">${temp}°</span>
         `;
         container.appendChild(pill);
-      }
+      });
     }
 
     function renderDailyForecast(daily) {
@@ -792,7 +820,7 @@
       for (let i = 0; i < daysCount; i++) {
         const date = new Date(daily.time[i]);
         const dayName = i === 0 ? "Today" : date.toLocaleDateString([], { weekday: 'short' });
-        const code = daily.weather_code[i] ?? 0;
+        const code = daily.weather_code[i] || 0;
         const itemWmo = WMO_CODES[code] || { emoji: "☀️", text: "Clear" };
         const maxTemp = Math.round(daily.temperature_2m_max[i]);
         const minTemp = Math.round(daily.temperature_2m_min[i]);
@@ -817,6 +845,7 @@
       }
     }
 
+    /* Dynamic atmosphere ambient background */
     function updateBackgroundTheme(theme) {
       const bg = document.getElementById("background-wrapper");
       if (theme === "rain") {
@@ -828,6 +857,7 @@
       } else if (theme === "cloudy" || theme === "fog") {
         bg.className = "fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 opacity-95";
       } else {
+        // Clear sky
         bg.className = "fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 opacity-95";
       }
     }
@@ -878,7 +908,7 @@
         const admin = [place.admin1, place.country].filter(Boolean).join(", ");
         item.innerHTML = `
           <div>
-            <strong class="font-semibold text-white block">${place.name}</strong>
+            <strong class="font-semibold text-white">${place.name}</strong>
             <span class="text-slate-400 block text-[11px]">${admin}</span>
           </div>
           <span class="text-[10px] text-slate-500 font-mono">${place.latitude.toFixed(2)}, ${place.longitude.toFixed(2)}</span>
@@ -899,6 +929,7 @@
       resultsList.classList.remove("hidden");
     }
 
+    // Close search dropdown on click outside
     document.addEventListener("click", (e) => {
       if (!searchInput.contains(e.target) && !resultsList.contains(e.target)) {
         resultsList.classList.add("hidden");
@@ -907,6 +938,7 @@
 
     function selectLocation(loc) {
       AppState.location = loc;
+      // Add to recents if not duplicate
       const exists = AppState.recents.find(r => r.name.toLowerCase() === loc.name.toLowerCase());
       if (!exists) {
         AppState.recents.unshift(loc);
@@ -917,13 +949,14 @@
       fetchWeatherData();
     }
 
+    /* Render quick location pills */
     function renderRecentChips() {
       const container = document.getElementById("recent-chips-container");
       container.innerHTML = `<span class="text-slate-400 flex items-center gap-1"><i data-lucide="history" class="w-3.5 h-3.5"></i> Recents:</span>`;
       AppState.recents.forEach(loc => {
         const btn = document.createElement("button");
         btn.className = "px-2.5 py-1 rounded-full glass-card hover:border-sky-400/50 hover:text-white text-slate-300 font-medium transition active:scale-95 whitespace-nowrap";
-        btn.textContent = loc.name;
+        btn.innerText = loc.name;
         btn.addEventListener("click", () => selectLocation(loc));
         container.appendChild(btn);
       });
@@ -931,64 +964,94 @@
     }
 
     function requestGpsLocation(isAutomatic = false) {
+      if (!window.isSecureContext) {
+        console.warn("Geolocation requires a secure context (HTTPS or http://localhost). Running on file:// or plain HTTP will block GPS.");
+        if (!isAutomatic) showToast("GPS requires HTTPS or localhost");
+        fetchWeatherData();
+        return;
+      }
+
       if (!navigator.geolocation) {
         if (!isAutomatic) showToast("Geolocation not supported");
         fetchWeatherData();
         return;
       }
 
-      if (!isAutomatic) {
-        showToast("Querying GPS coordinates...");
-      }
+      document.getElementById("header-coords").textContent = "Requesting GPS location...";
+
+      const handleSuccess = async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        try {
+          const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+          const data = await res.json();
+          const loc = {
+            name: data.city || data.locality || `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
+            country: data.countryName || "",
+            lat,
+            lon
+          };
+          localStorage.setItem("meteo_last_gps", JSON.stringify(loc));
+          selectLocation(loc);
+          showToast("GPS location locked! 📍");
+        } catch (err) {
+          const loc = {
+            name: `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
+            country: "",
+            lat,
+            lon
+          };
+          localStorage.setItem("meteo_last_gps", JSON.stringify(loc));
+          selectLocation(loc);
+          showToast("GPS coordinates set!");
+        }
+      };
+
+      const handleError = (error) => {
+        // If high accuracy timed out, retry once with standard network/Wi-Fi triangulation
+        if (error.code === error.TIMEOUT) {
+          navigator.geolocation.getCurrentPosition(
+            handleSuccess,
+            (fallbackErr) => {
+              console.warn("Standard accuracy GPS also failed:", fallbackErr.message);
+              if (!isAutomatic) showToast(`GPS Error: ${fallbackErr.message}`);
+              fetchWeatherData();
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+          );
+          return;
+        }
+
+        console.warn("GPS failed or permission denied:", error.message);
+        if (!isAutomatic) {
+          showToast(`GPS Error: ${error.message}`);
+        }
+        fetchWeatherData();
+      };
 
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          try {
-            const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
-            const data = await res.json();
-            selectLocation({
-              name: data.city || data.locality || "Current Location",
-              country: data.countryName || "",
-              lat,
-              lon
-            });
-            showToast("GPS location locked! 📍");
-          } catch (err) {
-            selectLocation({
-              name: `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
-              country: "",
-              lat,
-              lon
-            });
-            showToast("GPS coordinates set!");
-          }
-        },
-        (error) => {
-          if (!isAutomatic) {
-            showToast(`GPS Error: ${error.message}`);
-          } else {
-            console.warn("Automatic GPS check failed or denied. Falling back to default location.", error);
-            fetchWeatherData();
-          }
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
+        handleSuccess,
+        handleError,
+        { enableHighAccuracy: false, timeout: 7000, maximumAge: 300000 }
       );
     }
 
+    // Manual GPS button trigger
     document.getElementById("btn-gps").addEventListener("click", () => {
       requestGpsLocation(false);
     });
 
+    // Copy button
     document.getElementById("btn-copy-string").addEventListener("click", () => {
       copyTextToClipboard(AppState.generatedString);
     });
 
+    // Direct click on string box to copy
     document.getElementById("formatted-string-box").addEventListener("click", () => {
       copyTextToClipboard(AppState.generatedString);
     });
 
+    // Native Web Share API if supported
     document.getElementById("btn-share").addEventListener("click", async () => {
       if (navigator.share) {
         try {
@@ -996,12 +1059,16 @@
             title: "MyMeteoStation Weather Report",
             text: AppState.generatedString
           });
-        } catch (err) {}
+        } catch (err) {
+          // User cancelled
+        }
       } else {
         copyTextToClipboard(AppState.generatedString);
+        showToast("Link shared to clipboard! ✨");
       }
     });
 
+    // Collapsible formatting toggle
     const formatPanel = document.getElementById("formatting-options-panel");
     const chevron = document.getElementById("formatting-chevron");
     document.getElementById("toggle-formatting-options").addEventListener("click", () => {
@@ -1009,6 +1076,7 @@
       chevron.style.transform = isHidden ? "rotate(0deg)" : "rotate(180deg)";
     });
 
+    // Station Name configuration
     const stationInput = document.getElementById("station-name-input");
     stationInput.value = AppState.stationName;
     document.getElementById("save-station-btn").addEventListener("click", () => {
@@ -1023,6 +1091,7 @@
       }
     });
 
+    // Checkbox preferences
     const configKeys = [
       { id: "cfg-emoji", key: "emoji" },
       { id: "cfg-condition", key: "condition" },
@@ -1062,6 +1131,7 @@
     });
 
     function updateUnitButtonsUI() {
+      // Temp
       document.querySelectorAll(".unit-btn-temp").forEach(btn => {
         const val = btn.getAttribute("data-temp");
         if (val === AppState.units.temperature) {
@@ -1071,6 +1141,7 @@
         }
       });
 
+      // Wind
       document.querySelectorAll(".unit-btn-wind").forEach(btn => {
         const val = btn.getAttribute("data-wind");
         if (val === AppState.units.windSpeed) {
@@ -1080,6 +1151,7 @@
         }
       });
 
+      // Pressure
       document.querySelectorAll(".unit-btn-press").forEach(btn => {
         const val = btn.getAttribute("data-pressure");
         if (val === AppState.units.pressure) {
@@ -1090,6 +1162,7 @@
       });
     }
 
+    // Modal selection events
     document.querySelectorAll(".unit-btn-temp").forEach(btn => {
       btn.addEventListener("click", () => {
         AppState.units.temperature = btn.getAttribute("data-temp");
@@ -1113,8 +1186,8 @@
 
     btnSaveUnits.addEventListener("click", () => {
       localStorage.setItem("meteo_units", JSON.stringify(AppState.units));
-      document.getElementById("unit-badge-temp").textContent = AppState.units.temperature === "celsius" ? "°C" : "°F";
-      document.getElementById("unit-badge-wind").textContent = AppState.units.windSpeed;
+      document.getElementById("unit-badge-temp").innerText = AppState.units.temperature === "celsius" ? "°C" : "°F";
+      document.getElementById("unit-badge-wind").innerText = AppState.units.windSpeed;
       unitsModal.classList.add("hidden");
       fetchWeatherData();
     });
@@ -1138,24 +1211,29 @@
       deferredPrompt = null;
     });
 
+    // Register external Service Worker
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js")
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
           .catch((error) => {
-            console.error("Service Worker registration failed:", error);
+            console.error('Service Worker registration failed:', error);
           });
       });
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("unit-badge-temp").textContent = AppState.units.temperature === "celsius" ? "°C" : "°F";
-      document.getElementById("unit-badge-wind").textContent = AppState.units.windSpeed;
+      document.getElementById("unit-badge-temp").innerText = AppState.units.temperature === "celsius" ? "°C" : "°F";
+      document.getElementById("unit-badge-wind").innerText = AppState.units.windSpeed;
       renderRecentChips();
       lucide.createIcons();
 
-      // Prioritize GPS on launch; falls back to AppState.location if denied or timed out
+      // Prioritize GPS location on launch
       requestGpsLocation(true);
 
+      // Periodic auto-refresh every 10 minutes
       setInterval(fetchWeatherData, 10 * 60 * 1000);
     });
   </script>
