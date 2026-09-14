@@ -223,9 +223,9 @@
           <div class="col-span-full">
             <label class="block text-xs font-medium text-slate-400 mb-1">Station Signature Name:</label>
             <div class="flex gap-2">
-              <input id="station-name-input" type="text" value="MyMeteoStation" maxlength="32"
+              <input id="station-name-input" type="text" value="https://mymeteostation.vercel.app/" maxlength="64"
                 class="w-full text-xs glass-input px-3 py-2 rounded-lg text-white focus:outline-none"
-                placeholder="Station Name (e.g. MyMeteoStation)" />
+                placeholder="Station Name (e.g. https://mymeteostation.vercel.app/)" />
               <button id="save-station-btn"
                 class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium border border-slate-700 transition">Set</button>
             </div>
@@ -528,7 +528,7 @@
         lat: 51.5074,
         lon: -0.1278
       },
-      stationName: localStorage.getItem("meteo_station_name") || "MyMeteoStation",
+      stationName: localStorage.getItem("meteo_station_name") || "https://mymeteostation.vercel.app/",
       units: JSON.parse(localStorage.getItem("meteo_units")) || {
         temperature: "celsius", // 'celsius' | 'fahrenheit'
         windSpeed: "mph",       // 'mph' | 'kmh' | 'kn' | 'ms'
@@ -691,7 +691,7 @@
       }
 
       /* 1. Build Format String requested by user:
-         Example: '☀️ Clear sky, 15°C, Feels like 12°C, Humidity 73%, Wind 11mph from SW - by MyMeteoStation' */
+         Example: '☀️ Clear sky, 15°C, Feels like 12°C, Humidity 73%, Wind 11mph from SW - by https://mymeteostation.vercel.app/' */
       const parts = [];
 
       if (AppState.formatOptions.location) {
