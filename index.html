@@ -930,12 +930,17 @@
       lucide.createIcons();
     }
 
-    document.getElementById("btn-gps").addEventListener("click", () => {
+    function requestGpsLocation(isAutomatic = false) {
       if (!navigator.geolocation) {
-        showToast("Geolocation not supported");
+        if (!isAutomatic) showToast("Geolocation not supported");
+        fetchWeatherData();
         return;
       }
-      showToast("Querying GPS coordinates...");
+
+      if (!isAutomatic) {
+        showToast("Querying GPS coordinates...");
+      }
+
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const lat = position.coords.latitude;
@@ -961,10 +966,19 @@
           }
         },
         (error) => {
-          showToast(`GPS Error: ${error.message}`);
+          if (!isAutomatic) {
+            showToast(`GPS Error: ${error.message}`);
+          } else {
+            console.warn("Automatic GPS check failed or denied. Falling back to default location.", error);
+            fetchWeatherData();
+          }
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 8000 }
       );
+    }
+
+    document.getElementById("btn-gps").addEventListener("click", () => {
+      requestGpsLocation(false);
     });
 
     document.getElementById("btn-copy-string").addEventListener("click", () => {
@@ -1137,8 +1151,10 @@
       document.getElementById("unit-badge-temp").textContent = AppState.units.temperature === "celsius" ? "°C" : "°F";
       document.getElementById("unit-badge-wind").textContent = AppState.units.windSpeed;
       renderRecentChips();
-      fetchWeatherData();
       lucide.createIcons();
+
+      // Prioritize GPS on launch; falls back to AppState.location if denied or timed out
+      requestGpsLocation(true);
 
       setInterval(fetchWeatherData, 10 * 60 * 1000);
     });
