@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MyMeteoStation PWA | Open-Meteo Weather Reporter</title>
+  <meta name="description" content="Generate and copy formatted weather strings with Open-Meteo real-time forecasts." />
+  <meta name="theme-color" content="#0284c7" />
+
+  <!-- Inline Web App Manifest (Data URI for true single-file PWA) -->
+  <link rel="manifest"
+    href="data:application/manifest+json,%7B%22name%22%3A%22MyMeteoStation%22%2C%22short_name%22%3A%22MyMeteoStation%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23090d16%22%2C%22theme_color%22%3A%22%230284c7%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Ccircle%20cx%3D'50'%20cy%3D'50'%20r%3D'40'%20fill%3D'%2338bdf8'%2F%3E%3Ctext%20x%3D'50'%20y%3D'62'%20font-size%3D'42'%20text-anchor%3D'middle'%3E%E2%9B%85%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
+
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+      user-select: text;
+    }
+
+    /* Custom subtle glass panel */
+    .glass-card {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-card-subtle {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .glass-input {
+      background: rgba(2, 6, 23, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .glass-input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+    /* Smooth theme gradient transition */
+    #background-wrapper {
+      transition: background 1s ease-in-out;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+  </style>
+</head>
+
+<body
+  class="bg-slate-950 text-slate-100 min-h-screen antialiased flex flex-col items-center justify-start p-3 sm:p-6 transition-colors duration-700">
+
+  <div id="background-wrapper"
+    class="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 opacity-95">
+  </div>
+  <div
+    class="fixed inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(56,189,248,0.15),rgba(255,255,255,0))]">
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toast"
+    class="fixed top-5 z-50 transform -translate-y-16 opacity-0 transition-all duration-300 pointer-events-none px-4 py-2.5 rounded-full bg-emerald-500/90 text-white font-semibold text-sm shadow-xl flex items-center gap-2 backdrop-blur-md border border-emerald-300/30">
+    <i data-lucide="check-check" class="w-4 h-4"></i>
+    <span id="toast-message">Copied to clipboard!</span>
+  </div>
+
+  <header class="w-full max-w-4xl mx-auto mb-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+      <div class="flex items-center gap-2.5">
+        <div
+          class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-sky-500/25">
+          <i data-lucide="cloud-sun" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+            MyMeteoStation <span
+              class="text-xs uppercase px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30">Live</span>
+          </h1>
+          <p class="text-xs text-slate-400" id="header-coords">Locating weather grid...</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <!-- Geolocation Button -->
+        <button id="btn-gps" title="Detect GPS Location"
+          class="p-2.5 rounded-xl glass-card text-slate-300 hover:text-white hover:border-sky-500/50 transition active:scale-95 flex items-center gap-1.5 text-xs font-medium">
+          <i data-lucide="locate-fixed" class="w-4 h-4 text-sky-400"></i>
+          <span class="hidden sm:inline">GPS</span>
+        </button>
+
+        <!-- Unit Modal Toggle -->
+        <button id="btn-units-menu"
+          class="p-2.5 rounded-xl glass-card text-slate-300 hover:text-white hover:border-sky-500/50 transition active:scale-95 flex items-center gap-1 text-xs font-semibold">
+          <span id="unit-badge-temp">°C</span> | <span id="unit-badge-wind">mph</span>
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 ml-1 text-slate-400"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Input & Dropdown -->
+    <div class="relative w-full sm:w-72">
+      <div class="relative flex items-center">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none"></i>
+        <input id="location-search-input" type="text" placeholder="Search city (e.g., Tokyo, London)..."
+          class="w-full pl-9 pr-8 py-2 rounded-xl text-sm glass-input text-white placeholder-slate-400 focus:outline-none transition"
+          autocomplete="off" />
+        <button id="clear-search-btn" class="hidden absolute right-2.5 text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <!-- Search Autocomplete Suggestions List -->
+      <div id="search-results-list"
+        class="hidden absolute top-full mt-2 w-full glass-card rounded-xl overflow-hidden shadow-2xl z-40 border border-slate-700/60 max-h-60 overflow-y-auto">
+      </div>
+    </div>
+  </header>
+
+  <div class="w-full max-w-4xl mx-auto mb-4 flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar"
+    id="recent-chips-container">
+    <!-- Populated by JS -->
+  </div>
+
+  <main class="w-full max-w-4xl mx-auto flex flex-col gap-6">
+
+    <section class="glass-card rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden border-sky-500/20">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+          </span>
+          <h2 class="text-sm font-semibold tracking-wide uppercase text-sky-300">Weather Status String</h2>
+        </div>
+
+        <div class="text-xs text-slate-400 flex items-center gap-2">
+          <span>Format: Ready to share or broadcast</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        </div>
+      </div>
+
+      <!-- String Preview Box -->
+      <div class="relative group mt-1">
+        <div id="formatted-string-box"
+          class="font-mono-code text-sm sm:text-base p-4 rounded-xl bg-slate-950/80 border border-slate-700/50 text-slate-100 break-words leading-relaxed select-all">
+          Fetching weather data...
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-2.5">
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span>Click string to select, or press Copy Button</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="btn-share" title="Share via Web Share API"
+              class="px-3.5 py-2 rounded-xl glass-card text-xs font-semibold text-slate-200 hover:text-white hover:border-slate-500 transition flex items-center gap-1.5 active:scale-95">
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+              <span>Share</span>
+            </button>
+            <button id="btn-copy-string"
+              class="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-sky-500/30 transition flex items-center gap-1.5 active:scale-95">
+              <i data-lucide="clipboard-copy" class="w-4 h-4"></i>
+              <span id="btn-copy-label">Copy Status</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuration Collapsible Toolbar -->
+      <div class="mt-4 pt-4 border-t border-slate-800/80">
+        <div class="flex items-center justify-between cursor-pointer" id="toggle-formatting-options">
+          <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5 hover:text-white">
+            <i data-lucide="sliders" class="w-3.5 h-3.5 text-sky-400"></i>
+            Customise Status String & Signature
+          </span>
+          <i data-lucide="chevron-down" id="formatting-chevron"
+            class="w-4 h-4 text-slate-400 transition-transform duration-200"></i>
+        </div>
+
+        <div id="formatting-options-panel"
+          class="hidden mt-3 pt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Station Name input -->
+          <div class="col-span-full">
+            <label class="block text-xs font-medium text-slate-400 mb-1">Station Signature Name:</label>
+            <div class="flex gap-2">
+              <input id="station-name-input" type="text" value="MyMeteoStation" maxlength="32"
+                class="w-full text-xs glass-input px-3 py-2 rounded-lg text-white focus:outline-none"
+                placeholder="Station Name (e.g. MyMeteoStation)" />
+              <button id="save-station-btn"
+                class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium border border-slate-700 transition">Set</button>
+            </div>
+          </div>
+
+          <!-- Quick Checkbox Toggles -->
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-emoji" checked class="rounded accent-sky-500" />
+            <span>Include Emojis (☀️ 💨 💧)</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-condition" checked class="rounded accent-sky-500" />
+            <span>Condition Text (Clear sky)</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-temp" checked class="rounded accent-sky-500" />
+            <span>Temperature</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-feels" checked class="rounded accent-sky-500" />
+            <span>Feels Like Temp</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-humidity" checked class="rounded accent-sky-500" />
+            <span>Relative Humidity</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-wind" checked class="rounded accent-sky-500" />
+            <span>Wind Speed & Direction</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-station" checked class="rounded accent-sky-500" />
+            <span>Station Signature ('- by...')</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-pressure" class="rounded accent-sky-500" />
+            <span>Barometric Pressure</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+            <input type="checkbox" id="cfg-location" class="rounded accent-sky-500" />
+            <span>City/Location Name prefix</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+      <!-- Current Primary Metrics Hero -->
+      <section class="md:col-span-2 glass-card rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-sky-400 font-medium text-xs tracking-wider uppercase mb-1">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+              <span id="display-city">Loading...</span>
+            </div>
+            <h3 id="display-condition-text" class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Updating...
+            </h3>
+            <p id="display-updated-time" class="text-xs text-slate-400 mt-0.5">Auto-synced with Open-Meteo</p>
+          </div>
+          <div id="display-weather-icon" class="text-5xl sm:text-6xl select-none filter drop-shadow">
+            🌤️
+          </div>
+        </div>
+
+        <div class="my-6 flex flex-wrap items-baseline gap-4">
+          <div class="flex items-baseline">
+            <span id="display-current-temp"
+              class="text-6xl sm:text-7xl font-extrabold tracking-tight text-white">--</span>
+            <span id="display-temp-unit" class="text-2xl font-bold text-sky-400 ml-1">°C</span>
+          </div>
+          <div class="flex flex-col text-xs text-slate-300 border-l border-slate-700/60 pl-4 py-0.5">
+            <span>Feels like: <strong id="display-feels-like" class="text-white font-semibold">--°</strong></span>
+            <span class="mt-1">Dew Point: <strong id="display-dew-point" class="text-slate-200">--°</strong></span>
+          </div>
+        </div>
+
+        <!-- Quick 4-pill summary -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-4 border-t border-slate-800">
+          <div class="glass-card-subtle p-2.5 rounded-xl">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Humidity</span>
+            <span id="display-humidity" class="text-base font-bold text-white">--%</span>
+          </div>
+          <div class="glass-card-subtle p-2.5 rounded-xl">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Wind</span>
+            <span id="display-wind-summary" class="text-base font-bold text-white">--</span>
+          </div>
+          <div class="glass-card-subtle p-2.5 rounded-xl">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Precipitation</span>
+            <span id="display-precip" class="text-base font-bold text-white">0 mm</span>
+          </div>
+          <div class="glass-card-subtle p-2.5 rounded-xl">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">UV Index</span>
+            <span id="display-uv" class="text-base font-bold text-white">--</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Wind Compass & Sun Position Panel -->
+      <section class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+          <span>Wind Direction</span>
+          <span id="display-wind-deg-val" class="text-sky-400 font-mono">0°</span>
+        </h3>
+
+        <!-- Compass Visual -->
+        <div class="relative w-36 h-36 mx-auto my-3 flex items-center justify-center">
+          <!-- Compass Dial Ring -->
+          <div class="w-full h-full rounded-full border border-slate-700 relative flex items-center justify-center">
+            <span class="absolute top-1 text-[10px] font-bold text-slate-400">N</span>
+            <span class="absolute bottom-1 text-[10px] font-bold text-slate-400">S</span>
+            <span class="absolute right-1.5 text-[10px] font-bold text-slate-400">E</span>
+            <span class="absolute left-1.5 text-[10px] font-bold text-slate-400">W</span>
+            <!-- Center Pivot -->
+            <div class="w-2.5 h-2.5 rounded-full bg-sky-400 z-10 shadow-sm"></div>
+            <!-- Dynamic Arrow -->
+            <div id="compass-arrow"
+              class="absolute w-1 h-28 flex flex-col justify-between items-center transition-transform duration-700 origin-center"
+              style="transform: rotate(0deg);">
+              <div
+                class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[14px] border-b-rose-500">
+              </div>
+              <div
+                class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[10px] border-t-slate-500 opacity-60">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <p id="display-compass-label" class="text-sm font-bold text-white">Wind from North</p>
+          <p id="display-wind-gusts" class="text-xs text-slate-400 mt-0.5">Gusts up to --</p>
+        </div>
+
+        <!-- Sun Times -->
+        <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs text-slate-300">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="sunrise" class="w-4 h-4 text-amber-400"></i>
+            <span id="display-sunrise">--:--</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="sunset" class="w-4 h-4 text-orange-400"></i>
+            <span id="display-sunset">--:--</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- 24-Hour Hourly Forecast Horizontal Scroll -->
+      <section class="lg:col-span-2 glass-card rounded-2xl p-5">
+        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-sky-400"></i>
+          Next 24 Hours Forecast
+        </h3>
+        <div id="hourly-forecast-container" class="flex gap-3 overflow-x-auto pb-2 pt-1 no-scrollbar">
+          <!-- Populated by JS -->
+          <div class="text-xs text-slate-500 py-6">Loading hourly data...</div>
+        </div>
+      </section>
+
+      <!-- 5-Day Daily Outlook -->
+      <section class="glass-card rounded-2xl p-5">
+        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-sky-400"></i>
+          5-Day Forecast
+        </h3>
+        <div id="daily-forecast-container" class="flex flex-col gap-2.5">
+          <!-- Populated by JS -->
+          <div class="text-xs text-slate-500 py-6 text-center">Loading daily forecast...</div>
+        </div>
+      </section>
+    </div>
+
+    <div id="units-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 hidden">
+      <div class="glass-card rounded-2xl max-w-sm w-full p-6 border border-slate-700 shadow-2xl relative">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-white">Measurement Units</h3>
+          <button id="btn-close-units" class="text-slate-400 hover:text-white p-1">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Temperature Scale</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button data-temp="celsius"
+                class="unit-btn-temp py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold hover:border-sky-500 transition">Celsius
+                (°C)</button>
+              <button data-temp="fahrenheit"
+                class="unit-btn-temp py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold hover:border-sky-500 transition">Fahrenheit
+                (°F)</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Wind Speed Units</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button data-wind="mph"
+                class="unit-btn-wind py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold hover:border-sky-500 transition">Miles
+                / hr (mph)</button>
+              <button data-wind="kmh"
+                class="unit-btn-wind py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold hover:border-sky-500 transition">Kilometres
+                / hr (km/h)</button>
+              <button data-wind="kn"
+                class="unit-btn-wind py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold hover:border-sky-500 transition">Knots
+                (kn)</button>
+              <button data-wind="ms"
+                class="unit-btn-wind py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold hover:border-sky-500 transition">Meters
+                / sec (m/s)</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Atmospheric Pressure</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button data-pressure="hPa"
+                class="unit-btn-press py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold hover:border-sky-500 transition">hPa
+                / mbar</button>
+              <button data-pressure="inHg"
+                class="unit-btn-press py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold hover:border-sky-500 transition">inHg</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-save-units"
+          class="mt-6 w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs uppercase tracking-wide transition shadow-lg shadow-sky-500/20">
+          Apply & Refresh
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer
+    class="w-full max-w-4xl mx-auto mt-8 mb-4 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-800/80 pt-4">
+    <div class="flex items-center gap-1.5">
+      <span>Data provided without API key by</span>
+      <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer"
+        class="text-sky-400 hover:underline">Open-Meteo</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="btn-install-pwa" class="hidden text-sky-400 hover:underline font-semibold flex items-center gap-1">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i> Install App
+      </button>
+      <span>by <b>Vincenzo Frascino</b></span>
+    </div>
+  </footer>
+
+  <script>
+    /* WMO Weather Interpretation Codes (Open-Meteo standard) */
+    const WMO_CODES = {
+      0: { text: "Clear sky", emoji: "☀️", theme: "clear" },
+      1: { text: "Mainly clear", emoji: "🌤️", theme: "clear" },
+      2: { text: "Partly cloudy", emoji: "⛅", theme: "cloudy" },
+      3: { text: "Overcast", emoji: "☁️", theme: "cloudy" },
+      45: { text: "Fog", emoji: "🌫️", theme: "fog" },
+      48: { text: "Depositing rime fog", emoji: "🌫️", theme: "fog" },
+      51: { text: "Light drizzle", emoji: "🌦️", theme: "rain" },
+      53: { text: "Moderate drizzle", emoji: "🌦️", theme: "rain" },
+      55: { text: "Dense drizzle", emoji: "🌧️", theme: "rain" },
+      56: { text: "Freezing drizzle", emoji: "🌨️", theme: "snow" },
+      57: { text: "Dense freezing drizzle", emoji: "🌨️", theme: "snow" },
+      61: { text: "Slight rain", emoji: "🌧️", theme: "rain" },
+      63: { text: "Moderate rain", emoji: "🌧️", theme: "rain" },
+      65: { text: "Heavy rain", emoji: "🌧️", theme: "rain" },
+      66: { text: "Light freezing rain", emoji: "🌨️", theme: "snow" },
+      67: { text: "Heavy freezing rain", emoji: "🌨️", theme: "snow" },
+      71: { text: "Slight snow fall", emoji: "🌨️", theme: "snow" },
+      73: { text: "Moderate snow fall", emoji: "❄️", theme: "snow" },
+      75: { text: "Heavy snow fall", emoji: "❄️", theme: "snow" },
+      77: { text: "Snow grains", emoji: "❄️", theme: "snow" },
+      80: { text: "Slight rain showers", emoji: "🌦️", theme: "rain" },
+      81: { text: "Moderate rain showers", emoji: "🌧️", theme: "rain" },
+      82: { text: "Violent rain showers", emoji: "⛈️", theme: "rain" },
+      85: { text: "Slight snow showers", emoji: "🌨️", theme: "snow" },
+      86: { text: "Heavy snow showers", emoji: "🌨️", theme: "snow" },
+      95: { text: "Thunderstorm", emoji: "⛈️", theme: "thunder" },
+      96: { text: "Thunderstorm with slight hail", emoji: "⛈️", theme: "thunder" },
+      99: { text: "Thunderstorm with heavy hail", emoji: "⛈️", theme: "thunder" }
+    };
+
+    /* App Persistent State Management */
+    const AppState = {
+      location: {
+        name: "London",
+        country: "United Kingdom",
+        lat: 51.5074,
+        lon: -0.1278
+      },
+      stationName: localStorage.getItem("meteo_station_name") || "MyMeteoStation",
+      units: JSON.parse(localStorage.getItem("meteo_units")) || {
+        temperature: "celsius", // 'celsius' | 'fahrenheit'
+        windSpeed: "mph",       // 'mph' | 'kmh' | 'kn' | 'ms'
+        pressure: "hPa"         // 'hPa' | 'inHg'
+      },
+      formatOptions: JSON.parse(localStorage.getItem("meteo_format_opts")) || {
+        emoji: true,
+        condition: true,
+        temp: true,
+        feels: true,
+        humidity: true,
+        wind: true,
+        station: true,
+        pressure: false,
+        location: false
+      },
+      recents: JSON.parse(localStorage.getItem("meteo_recent_locations")) || [
+        { name: "London", country: "United Kingdom", lat: 51.5074, lon: -0.1278 },
+        { name: "New York", country: "United States", lat: 40.7128, lon: -74.0060 },
+        { name: "Tokyo", country: "Japan", lat: 35.6895, lon: 139.6917 },
+        { name: "Paris", country: "France", lat: 48.8566, lon: 2.3522 }
+      ],
+      currentData: null,
+      generatedString: ""
+    };
+
+    // Convert degrees (0-360) to 16-point cardinal compass text
+    function getCardinalDirection(deg) {
+      const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+      const index = Math.round((deg % 360) / 22.5) % 16;
+      return directions[index];
+    }
+
+    // Friendly long label for direction
+    function getLongDirection(abbr) {
+      const map = {
+        N: "North", NNE: "North-Northeast", NE: "Northeast", ENE: "East-Northeast",
+        E: "East", ESE: "East-Southeast", SE: "Southeast", SSE: "South-Southeast",
+        S: "South", SSW: "South-Southwest", SW: "Southwest", WSW: "West-Southwest",
+        W: "West", WNW: "West-Northwest", NW: "Northwest", NNW: "North-Northwest"
+      };
+      return map[abbr] || abbr;
+    }
+
+    // Toast trigger with visual bounce
+    function showToast(msg = "Copied to clipboard!") {
+      const toast = document.getElementById("toast");
+      const msgEl = document.getElementById("toast-message");
+      msgEl.innerText = msg;
+      toast.classList.remove("opacity-0", "-translate-y-16");
+      toast.classList.add("opacity-100", "translate-y-0");
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "-translate-y-16");
+      }, 2400);
+    }
+
+    // Robust Clipboard copy function with document.execCommand fallback
+    function copyTextToClipboard(text) {
+      if (!text) return;
+      let success = false;
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        success = document.execCommand("copy");
+      } catch (err) {
+        console.warn("Clipboard fallback error", err);
+      }
+      document.body.removeChild(textarea);
+
+      if (success) {
+        showToast("Copied to clipboard! ✨");
+        const btn = document.getElementById("btn-copy-label");
+        btn.textContent = "Copied!";
+        setTimeout(() => {
+          btn.textContent = "Copy Status";
+        }, 1800);
+      } else {
+        showToast("Selection ready! Please press Ctrl+C");
+      }
+    }
+
+    async function fetchWeatherData() {
+      const { lat, lon } = AppState.location;
+      const { temperature, windSpeed } = AppState.units;
+
+      // Construct Open-Meteo REST query
+      const url = new URL("https://api.open-meteo.com/v1/forecast");
+      url.searchParams.set("latitude", lat);
+      url.searchParams.set("longitude", lon);
+      url.searchParams.set("current", [
+        "temperature_2m",
+        "relative_humidity_2m",
+        "apparent_temperature",
+        "precipitation",
+        "weather_code",
+        "surface_pressure",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "wind_gusts_10m"
+      ].join(","));
+      url.searchParams.set("hourly", [
+        "temperature_2m",
+        "weather_code",
+        "uv_index",
+        "dew_point_2m"
+      ].join(","));
+      url.searchParams.set("daily", [
+        "weather_code",
+        "temperature_2m_max",
+        "temperature_2m_min",
+        "sunrise",
+        "sunset"
+      ].join(","));
+      url.searchParams.set("temperature_unit", temperature);
+      url.searchParams.set("wind_speed_unit", windSpeed);
+      url.searchParams.set("timezone", "auto");
+
+      try {
+        const response = await fetch(url.toString());
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        const data = await response.json();
+        AppState.currentData = data;
+        renderAllWeather();
+      } catch (err) {
+        console.error("Failed to load Open-Meteo weather data:", err);
+        document.getElementById("formatted-string-box").innerText =
+          `⚠️ Unable to load Open-Meteo forecast. Check your internet connection or try another location.`;
+      }
+    }
+
+    function renderAllWeather() {
+      if (!AppState.currentData) return;
+
+      const { current, daily, hourly } = AppState.currentData;
+      const code = current.weather_code;
+      const wmo = WMO_CODES[code] || { text: "Clear sky", emoji: "☀️", theme: "clear" };
+      const tempUnit = AppState.units.temperature === "celsius" ? "°C" : "°F";
+      const windUnit = AppState.units.windSpeed;
+      const cardinal = getCardinalDirection(current.wind_direction_10m);
+
+      // Temperature rounded values
+      const curTemp = Math.round(current.temperature_2m);
+      const feelsLike = Math.round(current.apparent_temperature);
+      const humidity = Math.round(current.relative_humidity_2m);
+      const windSpeedVal = Math.round(current.wind_speed_10m);
+      const gustVal = Math.round(current.wind_gusts_10m);
+
+      // Barometric Pressure conversion if needed
+      let pressureVal = Math.round(current.surface_pressure);
+      let pressureDisplay = `${pressureVal} hPa`;
+      if (AppState.units.pressure === "inHg") {
+        pressureDisplay = `${(pressureVal * 0.02953).toFixed(2)} inHg`;
+      }
+
+      /* 1. Build Format String requested by user:
+         Example: '☀️ Clear sky, 15°C, Feels like 12°C, Humidity 73%, Wind 11mph from SW - by MyMeteoStation' */
+      const parts = [];
+
+      if (AppState.formatOptions.location) {
+        parts.push(`[${AppState.location.name}]`);
+      }
+
+      // Condition with emoji
+      let condStr = "";
+      if (AppState.formatOptions.emoji) {
+        condStr += `${wmo.emoji} `;
+      }
+      if (AppState.formatOptions.condition) {
+        condStr += wmo.text;
+      }
+      if (condStr.trim()) parts.push(condStr.trim());
+
+      if (AppState.formatOptions.temp) {
+        parts.push(`${curTemp}${tempUnit}`);
+      }
+
+      if (AppState.formatOptions.feels) {
+        parts.push(`Feels like ${feelsLike}${tempUnit}`);
+      }
+
+      if (AppState.formatOptions.humidity) {
+        parts.push(`Humidity ${humidity}%`);
+      }
+
+      if (AppState.formatOptions.wind) {
+        parts.push(`Wind ${windSpeedVal}${windUnit} from ${cardinal}`);
+      }
+
+      if (AppState.formatOptions.pressure) {
+        parts.push(`Pressure ${pressureDisplay}`);
+      }
+
+      let resultString = parts.join(", ");
+
+      if (AppState.formatOptions.station && AppState.stationName.trim()) {
+        resultString += ` - by ${AppState.stationName.trim()}`;
+      }
+
+      AppState.generatedString = resultString;
+      document.getElementById("formatted-string-box").innerText = resultString;
+
+      /* 2. Update Primary Dashboard UI */
+      document.getElementById("display-city").innerText = `${AppState.location.name}, ${AppState.location.country || ""}`;
+      document.getElementById("display-condition-text").innerText = wmo.text;
+      document.getElementById("display-weather-icon").innerText = wmo.emoji;
+      document.getElementById("display-current-temp").innerText = curTemp;
+      document.getElementById("display-temp-unit").innerText = tempUnit;
+      document.getElementById("display-feels-like").innerText = `${feelsLike}${tempUnit}`;
+      document.getElementById("display-humidity").innerText = `${humidity}%`;
+      document.getElementById("display-wind-summary").innerText = `${windSpeedVal} ${windUnit} ${cardinal}`;
+      document.getElementById("display-precip").innerText = `${current.precipitation} mm`;
+
+      // Dew Point from hourly current slot
+      if (hourly && hourly.dew_point_2m && hourly.dew_point_2m.length > 0) {
+        document.getElementById("display-dew-point").innerText = `${Math.round(hourly.dew_point_2m[0])}${tempUnit}`;
+      }
+
+      // UV Index
+      if (hourly && hourly.uv_index && hourly.uv_index.length > 0) {
+        document.getElementById("display-uv").innerText = Math.round(hourly.uv_index[0]);
+      }
+
+      // Compass UI
+      const windDeg = current.wind_direction_10m;
+      document.getElementById("display-wind-deg-val").innerText = `${windDeg}°`;
+      document.getElementById("compass-arrow").style.transform = `rotate(${windDeg}deg)`;
+      document.getElementById("display-compass-label").innerText = `Wind from ${getLongDirection(cardinal)}`;
+      document.getElementById("display-wind-gusts").innerText = `Gusts up to ${gustVal} ${windUnit}`;
+
+      // Sun Times
+      if (daily && daily.sunrise && daily.sunset) {
+        const sunriseDate = new Date(daily.sunrise[0]);
+        const sunsetDate = new Date(daily.sunset[0]);
+        document.getElementById("display-sunrise").innerText = sunriseDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById("display-sunset").innerText = sunsetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+      // Header coordinates & last update
+      document.getElementById("header-coords").innerText = `${AppState.location.lat.toFixed(2)}°N, ${AppState.location.lon.toFixed(2)}°E`;
+      document.getElementById("display-updated-time").innerText = `Updated at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+      // Update background theme tint
+      updateBackgroundTheme(wmo.theme);
+
+      // Render 24-hour and 5-day widgets
+      renderHourlyStrip(hourly);
+      renderDailyForecast(daily);
+
+      // Re-init icons
+      lucide.createIcons();
+    }
+
+    function renderHourlyStrip(hourly) {
+      const container = document.getElementById("hourly-forecast-container");
+      if (!hourly || !hourly.time) return;
+
+      container.innerHTML = "";
+      const currentHourIndex = new Date().getHours();
+      const next24 = hourly.time.slice(currentHourIndex, currentHourIndex + 24);
+
+      next24.forEach((timeStr, idx) => {
+        const absoluteIndex = currentHourIndex + idx;
+        const dateObj = new Date(timeStr);
+        const hourLabel = idx === 0 ? "Now" : dateObj.toLocaleTimeString([], { hour: 'numeric' });
+        const code = hourly.weather_code[absoluteIndex] || 0;
+        const itemWmo = WMO_CODES[code] || { emoji: "☀️" };
+        const temp = Math.round(hourly.temperature_2m[absoluteIndex]);
+
+        const pill = document.createElement("div");
+        pill.className = "flex flex-col items-center justify-center p-3 rounded-2xl glass-card-subtle min-w-[70px] flex-shrink-0 text-center hover:border-sky-500/40 transition";
+        pill.innerHTML = `
+          <span class="text-[11px] font-medium text-slate-400 mb-1">${hourLabel}</span>
+          <span class="text-2xl my-1 select-none">${itemWmo.emoji}</span>
+          <span class="text-xs font-bold text-white mt-1">${temp}°</span>
+        `;
+        container.appendChild(pill);
+      });
+    }
+
+    function renderDailyForecast(daily) {
+      const container = document.getElementById("daily-forecast-container");
+      if (!daily || !daily.time) return;
+
+      container.innerHTML = "";
+      const daysCount = Math.min(daily.time.length, 5);
+
+      for (let i = 0; i < daysCount; i++) {
+        const date = new Date(daily.time[i]);
+        const dayName = i === 0 ? "Today" : date.toLocaleDateString([], { weekday: 'short' });
+        const code = daily.weather_code[i] || 0;
+        const itemWmo = WMO_CODES[code] || { emoji: "☀️", text: "Clear" };
+        const maxTemp = Math.round(daily.temperature_2m_max[i]);
+        const minTemp = Math.round(daily.temperature_2m_min[i]);
+
+        const row = document.createElement("div");
+        row.className = "flex items-center justify-between p-2.5 rounded-xl glass-card-subtle text-xs";
+        row.innerHTML = `
+          <span class="font-semibold text-slate-200 w-14">${dayName}</span>
+          <div class="flex items-center gap-1.5 flex-1 justify-center">
+            <span class="text-lg">${itemWmo.emoji}</span>
+            <span class="text-slate-400 truncate max-w-[90px] hidden sm:inline">${itemWmo.text}</span>
+          </div>
+          <div class="flex items-center gap-2 font-mono">
+            <span class="text-slate-400">${minTemp}°</span>
+            <div class="w-12 h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
+              <div class="bg-gradient-to-r from-sky-400 to-amber-400 w-full rounded-full"></div>
+            </div>
+            <span class="font-bold text-white">${maxTemp}°</span>
+          </div>
+        `;
+        container.appendChild(row);
+      }
+    }
+
+    /* Dynamic atmosphere ambient background */
+    function updateBackgroundTheme(theme) {
+      const bg = document.getElementById("background-wrapper");
+      if (theme === "rain") {
+        bg.className = "fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 opacity-95";
+      } else if (theme === "thunder") {
+        bg.className = "fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-slate-950 via-purple-950 to-neutral-950 opacity-95";
+      } else if (theme === "snow") {
+        bg.className = "fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-slate-950 via-cyan-950 to-slate-900 opacity-95";
+      } else if (theme === "cloudy" || theme === "fog") {
+        bg.className = "fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 opacity-95";
+      } else {
+        // Clear sky
+        bg.className = "fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 opacity-95";
+      }
+    }
+
+    let searchDebounceTimer = null;
+    const searchInput = document.getElementById("location-search-input");
+    const resultsList = document.getElementById("search-results-list");
+    const clearBtn = document.getElementById("clear-search-btn");
+
+    searchInput.addEventListener("input", (e) => {
+      const query = e.target.value.trim();
+      clearBtn.classList.toggle("hidden", query.length === 0);
+
+      if (query.length < 2) {
+        resultsList.classList.add("hidden");
+        return;
+      }
+
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`);
+          const data = await res.json();
+          renderSearchResults(data.results || []);
+        } catch (err) {
+          console.error("Geocoding failed", err);
+        }
+      }, 250);
+    });
+
+    clearBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      resultsList.classList.add("hidden");
+      clearBtn.classList.add("hidden");
+    });
+
+    function renderSearchResults(results) {
+      resultsList.innerHTML = "";
+      if (results.length === 0) {
+        resultsList.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No locations found.</div>`;
+        resultsList.classList.remove("hidden");
+        return;
+      }
+
+      results.forEach((place) => {
+        const item = document.createElement("button");
+        item.className = "w-full text-left p-3 text-xs hover:bg-sky-500/10 border-b border-slate-800 flex items-center justify-between text-slate-200 hover:text-white transition";
+        const admin = [place.admin1, place.country].filter(Boolean).join(", ");
+        item.innerHTML = `
+          <div>
+            <strong class="font-semibold text-white">${place.name}</strong>
+            <span class="text-slate-400 block text-[11px]">${admin}</span>
+          </div>
+          <span class="text-[10px] text-slate-500 font-mono">${place.latitude.toFixed(2)}, ${place.longitude.toFixed(2)}</span>
+        `;
+        item.addEventListener("click", () => {
+          selectLocation({
+            name: place.name,
+            country: place.country || "",
+            lat: place.latitude,
+            lon: place.longitude
+          });
+          resultsList.classList.add("hidden");
+          searchInput.value = "";
+          clearBtn.classList.add("hidden");
+        });
+        resultsList.appendChild(item);
+      });
+      resultsList.classList.remove("hidden");
+    }
+
+    // Close search dropdown on click outside
+    document.addEventListener("click", (e) => {
+      if (!searchInput.contains(e.target) && !resultsList.contains(e.target)) {
+        resultsList.classList.add("hidden");
+      }
+    });
+
+    function selectLocation(loc) {
+      AppState.location = loc;
+      // Add to recents if not duplicate
+      const exists = AppState.recents.find(r => r.name.toLowerCase() === loc.name.toLowerCase());
+      if (!exists) {
+        AppState.recents.unshift(loc);
+        if (AppState.recents.length > 5) AppState.recents.pop();
+        localStorage.setItem("meteo_recent_locations", JSON.stringify(AppState.recents));
+      }
+      renderRecentChips();
+      fetchWeatherData();
+    }
+
+    /* Render quick location pills */
+    function renderRecentChips() {
+      const container = document.getElementById("recent-chips-container");
+      container.innerHTML = `<span class="text-slate-400 flex items-center gap-1"><i data-lucide="history" class="w-3.5 h-3.5"></i> Recents:</span>`;
+      AppState.recents.forEach(loc => {
+        const btn = document.createElement("button");
+        btn.className = "px-2.5 py-1 rounded-full glass-card hover:border-sky-400/50 hover:text-white text-slate-300 font-medium transition active:scale-95 whitespace-nowrap";
+        btn.innerText = loc.name;
+        btn.addEventListener("click", () => selectLocation(loc));
+        container.appendChild(btn);
+      });
+      lucide.createIcons();
+    }
+
+    document.getElementById("btn-gps").addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        showToast("Geolocation not supported by your browser");
+        return;
+      }
+      showToast("Querying GPS coordinates...");
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          try {
+            // Reverse geocode via Open-Meteo or fallback naming
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${lat.toFixed(2)},${lon.toFixed(2)}&count=1&language=en&format=json`);
+            selectLocation({
+              name: "Current GPS Location",
+              country: "Device",
+              lat: lat,
+              lon: lon
+            });
+            showToast("GPS location locked! 📍");
+          } catch (err) {
+            selectLocation({
+              name: "My GPS Coordinates",
+              country: "",
+              lat: lat,
+              lon: lon
+            });
+          }
+        },
+        (error) => {
+          showToast(`GPS Error: ${error.message}`);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+
+    // Copy button
+    document.getElementById("btn-copy-string").addEventListener("click", () => {
+      copyTextToClipboard(AppState.generatedString);
+    });
+
+    // Direct click on string box to copy
+    document.getElementById("formatted-string-box").addEventListener("click", () => {
+      copyTextToClipboard(AppState.generatedString);
+    });
+
+    // Native Web Share API if supported
+    document.getElementById("btn-share").addEventListener("click", async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "MyMeteoStation Weather Report",
+            text: AppState.generatedString
+          });
+        } catch (err) {
+          // User cancelled
+        }
+      } else {
+        copyTextToClipboard(AppState.generatedString);
+        showToast("Link shared to clipboard! ✨");
+      }
+    });
+
+    // Collapsible formatting toggle
+    const formatPanel = document.getElementById("formatting-options-panel");
+    const chevron = document.getElementById("formatting-chevron");
+    document.getElementById("toggle-formatting-options").addEventListener("click", () => {
+      const isHidden = formatPanel.classList.toggle("hidden");
+      chevron.style.transform = isHidden ? "rotate(0deg)" : "rotate(180deg)";
+    });
+
+    // Station Name configuration
+    const stationInput = document.getElementById("station-name-input");
+    stationInput.value = AppState.stationName;
+    document.getElementById("save-station-btn").addEventListener("click", () => {
+      AppState.stationName = stationInput.value.trim() || "MyMeteoStation";
+      localStorage.setItem("meteo_station_name", AppState.stationName);
+      renderAllWeather();
+      showToast("Station name updated!");
+    });
+    stationInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        document.getElementById("save-station-btn").click();
+      }
+    });
+
+    // Checkbox preferences
+    const configKeys = [
+      { id: "cfg-emoji", key: "emoji" },
+      { id: "cfg-condition", key: "condition" },
+      { id: "cfg-temp", key: "temp" },
+      { id: "cfg-feels", key: "feels" },
+      { id: "cfg-humidity", key: "humidity" },
+      { id: "cfg-wind", key: "wind" },
+      { id: "cfg-station", key: "station" },
+      { id: "cfg-pressure", key: "pressure" },
+      { id: "cfg-location", key: "location" }
+    ];
+
+    configKeys.forEach(({ id, key }) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.checked = !!AppState.formatOptions[key];
+        el.addEventListener("change", (e) => {
+          AppState.formatOptions[key] = e.target.checked;
+          localStorage.setItem("meteo_format_opts", JSON.stringify(AppState.formatOptions));
+          renderAllWeather();
+        });
+      }
+    });
+
+    const unitsModal = document.getElementById("units-modal");
+    const btnUnitsMenu = document.getElementById("btn-units-menu");
+    const btnCloseUnits = document.getElementById("btn-close-units");
+    const btnSaveUnits = document.getElementById("btn-save-units");
+
+    btnUnitsMenu.addEventListener("click", () => {
+      updateUnitButtonsUI();
+      unitsModal.classList.remove("hidden");
+    });
+
+    btnCloseUnits.addEventListener("click", () => {
+      unitsModal.classList.add("hidden");
+    });
+
+    function updateUnitButtonsUI() {
+      // Temp
+      document.querySelectorAll(".unit-btn-temp").forEach(btn => {
+        const val = btn.getAttribute("data-temp");
+        if (val === AppState.units.temperature) {
+          btn.className = "unit-btn-temp py-2 px-3 rounded-xl border border-sky-400 bg-sky-500/20 text-sky-300 text-xs font-semibold";
+        } else {
+          btn.className = "unit-btn-temp py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300 hover:border-slate-500";
+        }
+      });
+
+      // Wind
+      document.querySelectorAll(".unit-btn-wind").forEach(btn => {
+        const val = btn.getAttribute("data-wind");
+        if (val === AppState.units.windSpeed) {
+          btn.className = "unit-btn-wind py-2 px-3 rounded-xl border border-sky-400 bg-sky-500/20 text-sky-300 text-xs font-semibold";
+        } else {
+          btn.className = "unit-btn-wind py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300 hover:border-slate-500";
+        }
+      });
+
+      // Pressure
+      document.querySelectorAll(".unit-btn-press").forEach(btn => {
+        const val = btn.getAttribute("data-pressure");
+        if (val === AppState.units.pressure) {
+          btn.className = "unit-btn-press py-2 px-3 rounded-xl border border-sky-400 bg-sky-500/20 text-sky-300 text-xs font-semibold";
+        } else {
+          btn.className = "unit-btn-press py-2 px-3 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300 hover:border-slate-500";
+        }
+      });
+    }
+
+    // Modal selection events
+    document.querySelectorAll(".unit-btn-temp").forEach(btn => {
+      btn.addEventListener("click", () => {
+        AppState.units.temperature = btn.getAttribute("data-temp");
+        updateUnitButtonsUI();
+      });
+    });
+
+    document.querySelectorAll(".unit-btn-wind").forEach(btn => {
+      btn.addEventListener("click", () => {
+        AppState.units.windSpeed = btn.getAttribute("data-wind");
+        updateUnitButtonsUI();
+      });
+    });
+
+    document.querySelectorAll(".unit-btn-press").forEach(btn => {
+      btn.addEventListener("click", () => {
+        AppState.units.pressure = btn.getAttribute("data-pressure");
+        updateUnitButtonsUI();
+      });
+    });
+
+    btnSaveUnits.addEventListener("click", () => {
+      localStorage.setItem("meteo_units", JSON.stringify(AppState.units));
+      document.getElementById("unit-badge-temp").innerText = AppState.units.temperature === "celsius" ? "°C" : "°F";
+      document.getElementById("unit-badge-wind").innerText = AppState.units.windSpeed;
+      unitsModal.classList.add("hidden");
+      fetchWeatherData();
+    });
+
+    let deferredPrompt = null;
+    const installBtn = document.getElementById("btn-install-pwa");
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.remove("hidden");
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        installBtn.classList.add("hidden");
+      }
+      deferredPrompt = null;
+    });
+
+    // Register external Service Worker
+    if ("serviceWorker" in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("unit-badge-temp").innerText = AppState.units.temperature === "celsius" ? "°C" : "°F";
+      document.getElementById("unit-badge-wind").innerText = AppState.units.windSpeed;
+      renderRecentChips();
+      fetchWeatherData();
+      lucide.createIcons();
+
+      // Periodic auto-refresh every 10 minutes
+      setInterval(fetchWeatherData, 10 * 60 * 1000);
+    });
+  </script>
+</body>
+
+</html>
