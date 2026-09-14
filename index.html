@@ -1085,7 +1085,7 @@
     const stationInput = document.getElementById("station-name-input");
     stationInput.value = AppState.stationName;
     document.getElementById("save-station-btn").addEventListener("click", () => {
-      AppState.stationName = stationInput.value.trim() || "MyMeteoStation";
+      AppState.stationName = stationInput.value.trim() || "https://mymeteostation.vercel.app/";
       localStorage.setItem("meteo_station_name", AppState.stationName);
       renderAllWeather();
       showToast("Station name updated!");
