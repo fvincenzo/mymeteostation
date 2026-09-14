@@ -5,14 +5,14 @@
   "display": "standalone",
   "screenshots": [
     {
-      "src": "/images/screenshot-mobile.png",
+      "src": "./images/screenshot-mobile.png",
       "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Home screen on mobile"
     },
     {
-      "src": "/images/screenshot-desktop.png",
+      "src": "./images/screenshot-desktop.png",
       "sizes": "3840x2160",
       "type": "image/png",
       "form_factor": "wide",
@@ -27,12 +27,12 @@
   "theme_color": "#0b0f14",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "./icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "./icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
