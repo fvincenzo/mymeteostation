@@ -1,11 +1,11 @@
 // sw.js
 const CACHE_NAME = 'weather-pwa-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
   // Add any local CSS, JS, or icon files here if you have them
 ];
 
