@@ -1,0 +1,21 @@
+{
+  "name": "mymeteostation",
+  "version": "1.0.0",
+  "description": "My Meteo Station Progressive Web App",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve public",
+    "build": "echo 'No build step required for static site'",
+    "lint": "echo 'No linting configured'"
+  },
+  "keywords": [
+    "weather",
+    "pwa",
+    "meteo"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
